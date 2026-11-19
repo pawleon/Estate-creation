@@ -1,4 +1,4 @@
-# Estate 1.1.2-json-compat — repair build
+# Estate 1.1.3-parser-recovery — repair build
 
 This is a local repair of the supplied `ST-Estate-main.zip` rather than an upstream release.
 
@@ -28,3 +28,11 @@ This is a local repair of the supplied `ST-Estate-main.zip` rather than an upstr
 - Raw reply history keeps the last **20 replies**, up to **100,000 characters per reply**, to limit browser storage use. Entries themselves are stored separately.
 - **This cannot recover paid requests lost before installing the repair.**
 - Static syntax checks and local mocked flow tests passed, including API interruption after a successful batch, resume without re-requesting that batch, successful lorebook write, and a lorebook write error followed by recovery. It has **not** been exercised against your live SillyTavern instance/API provider.
+
+## 1.1.3 response parsing hardening
+
+- Accept bare JSON arrays (including parsed arrays) without silently losing entries after the first one.
+- Recover content from common model field names (`description`, `text`, `body`) and keywords from `keywords` or `triggers`.
+- Accept a single nesting layer under `data`, `result` or `output`.
+- Keep rejecting truly empty responses like `{}`; there is no generated prose to recover from them.
+- No automatic re-requests were added. These cases were checked with offline response fixtures and the existing interrupted-run/write-retry simulations, not against a paid API.

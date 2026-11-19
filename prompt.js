@@ -598,9 +598,9 @@ export function replyBudget(words, maxKeys, entries) {
  * @returns {{ok: true, value: object} | {ok: false, error: string}}
  */
 export function extractJson(text) {
-    // A schema-constrained reply is already an object. Nothing to salvage and
-    // nothing to guess at: this is the path that is supposed to be boring.
-    if (text && typeof text === 'object' && !Array.isArray(text)) {
+    // Some providers return parsed JSON, including bare arrays of entries.
+    // They must be preserved intact instead of stringified into [object Object].
+    if (text && typeof text === 'object') {
         return { ok: true, value: text };
     }
 
@@ -628,7 +628,14 @@ export function extractJson(text) {
     let lastError = 'no JSON object in the reply';
 
     for (const candidate of candidates) {
-        const start = candidate.indexOf('{');
+        // A top-level array is valid Estate input too. Parse it as a whole
+        // before extracting any inner object, or all but its first entry vanish.
+        const whole = tryParse(candidate);
+        if (whole.ok) return whole;
+        const objectStart = candidate.indexOf('{');
+        const arrayStart = candidate.indexOf('[');
+        const start = arrayStart >= 0 && (objectStart < 0 || arrayStart < objectStart)
+            ? arrayStart : objectStart;
         if (start < 0) continue;
         const body = candidate.slice(start);
 
@@ -680,8 +687,8 @@ function closeString(source) {
 function tryParse(source) {
     try {
         const value = JSON.parse(source);
-        if (!value || typeof value !== 'object' || Array.isArray(value)) {
-            return { ok: false, error: 'top level is not an object' };
+        if (!value || typeof value !== 'object') {
+            return { ok: false, error: 'top level is not an object or array' };
         }
         return { ok: true, value };
     } catch (error) {
@@ -832,22 +839,23 @@ export function normalizeEntries(value, options = {}) {
     for (const raw of list.slice(0, MAX_ENTRIES)) {
         if (!raw || typeof raw !== 'object') continue;
 
-        const content = String(raw.content ?? '').trim();
+        // Common model field aliases do not justify throwing away generated prose.
+        // Keep the canonical five fields for the World Info writer downstream.
+        const content = String(raw.content ?? raw.description ?? raw.text ?? raw.body ?? '').trim();
         if (!content) continue;
 
-        const title = stripOwner(
-            String(raw.title ?? '').trim() || String(raw.room ?? '').trim(),
-            options.names,
-        ).slice(0, 120) || 'Home';
+        const room = String(raw.room ?? raw.zone ?? raw.location ?? raw.name ?? raw.title ?? '').trim().slice(0, 60);
+        const title = stripOwner(String(raw.title ?? raw.name ?? room).trim(), options.names)
+            .slice(0, 120) || 'Home';
 
-        const keys = normalizeKeySpecs(raw.keys, options.englishOnly === true);
+        const keys = normalizeKeySpecs(raw.keys ?? raw.keywords ?? raw.triggers ?? [], options.englishOnly === true);
         if (!keys.length) keyless++;
 
         entries.push({
             title,
-            room: String(raw.room ?? '').trim().slice(0, 60),
+            room,
             content,
-            visual: String(raw.visual ?? '').trim().slice(0, 1200),
+            visual: String(raw.visual ?? raw.visualTags ?? '').trim().slice(0, 1200),
             keys,
         });
     }
@@ -877,10 +885,17 @@ function entryList(value) {
     for (const key of ['entries', 'rooms', 'zones', 'items', 'lorebook', 'results']) {
         if (Array.isArray(value[key])) return value[key];
     }
+    // Providers and models sometimes wrap the payload once in data/output.
+    for (const key of ['data', 'result', 'output']) {
+        if (value[key] && typeof value[key] === 'object') {
+            const nested = entryList(value[key]);
+            if (nested) return nested;
+        }
+    }
 
     // A single entry returned unwrapped. It has the fields of one, so it is
     // one, and refusing it over its packaging helps nobody.
-    if (value.content || value.title) return [value];
+    if (value.content || value.description || value.text || value.body || value.title) return [value];
 
     // One unrecognised key holding the array is still unambiguous.
     const arrays = Object.values(value).filter(Array.isArray);
