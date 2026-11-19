@@ -204,12 +204,15 @@ function ownerNames(ctx, job) {
 }
 
 /**
- * Single paid generation attempt. Schema unsupported is the only automatic
- * fallback; do not silently double the token budget or ask the model to
- * regenerate an already-returned reply just because a parser disliked it.
+ * Single paid generation attempt. Estate asks for JSON in its prompt but by
+ * default does NOT use provider-enforced structured output: SillyTavern can
+ * silently turn failed schema generations into the literal "{}". The model's
+ * ordinary response is still parsed and validated as JSON locally. A caller
+ * can explicitly opt into a provider-side schema by setting noSchema=false.
+ * Never auto-retry a returned response or double its token budget.
  */
 async function attemptGeneration(ctx, job, profileId, options) {
-    const noSchema = options.noSchema === true;
+    const noSchema = options.noSchema !== false;
     try {
         const result = await runGeneration(ctx, job, profileId, { ...options, noSchema });
         return { ...result, noSchema };
@@ -284,6 +287,13 @@ async function generatePass(ctx, job, profileId, options) {
         ? [...options.chunk.rooms, ...(options.chunk.whole ? ['whole'] : [])] : ['whole'];
     const attempt = await attemptGeneration(ctx, job, profileId, options);
     const parsed = extractJson(attempt.reply);
+    // In SillyTavern, a failed structured request may arrive as the literal
+    // "{}" without throwing. Treat that as an empty generation rather than
+    // claiming a valid JSON reply was produced.
+    if (parsed.ok && parsed.value && typeof parsed.value === 'object'
+        && !Array.isArray(parsed.value) && !Object.keys(parsed.value).length) {
+        return { ok: false, error: 'The model/API returned only {} (an empty JSON object). No room entry was produced.' };
+    }
     const normalized = parsed.ok
         ? normalizeEntries(parsed.value, { englishOnly: job.keyLanguage === 'en', names: ownerNames(ctx, job) })
         : { ok: false, error: parsed.error };
@@ -683,7 +693,9 @@ async function suggestPlaces(settings, brief) {
         }
 
         const job = { ...settings, ...brief };
-        const request = buildSuggestRequest(job, { lore, count: settings.suggestCount, context: ctx });
+        // The prompt still requires JSON. Do not force provider-side structured
+        // output: a failed schema can silently be returned by ST as "{}".
+        const request = { ...buildSuggestRequest(job, { lore, count: settings.suggestCount, context: ctx }), jsonSchema: null };
 
         const send = async attempt => (profileId
             ? await generateViaProfile(ctx, profileId, attempt, activeAbort.signal)

@@ -1,4 +1,4 @@
-# Estate 1.1.1-recovery — repair build
+# Estate 1.1.2-json-compat — repair build
 
 This is a local repair of the supplied `ST-Estate-main.zip` rather than an upstream release.
 
@@ -8,7 +8,8 @@ This is a local repair of the supplied `ST-Estate-main.zip` rather than an upstr
 - **Recover saved draft.** The Estate dialog now displays a recovery panel with Review saved entries, Resume missing rooms, View returned text, and Discard draft. Reviewing and viewing returned text make no AI requests. Resume explicitly requests unfinished rooms only.
 - **Write failures retain drafts.** A failed lorebook create/save does not clear the browser draft. Successful writes are recorded so a resumed review does not overwrite previously written entries with their original, unedited drafts.
 - **Real error text.** The in-app toast shows the underlying exception message rather than a generic “Generation failed”.
-- **No surprise paid retries.** Generation no longer retries malformed JSON or increases `max_tokens` automatically on a token-limit failure. It still has one schema fallback if a provider rejects structured output entirely.
+- **JSON generation without forced structured output.** Estate still tells the model to return JSON and still parses JSON locally, but no longer sends a provider-side `jsonSchema` by default. This specifically avoids the failure mode in which SillyTavern returns literal `{}` after a structured-output attempt. It does not assume the model is incapable of producing JSON; Memory Books can likewise request JSON without enforcing a provider schema.
+- **No surprise paid retries.** Generation no longer retries malformed JSON or increases `max_tokens` automatically on a token-limit failure. Provider-side schemas are disabled by default; normal requests have no schema-rejection retry.
 - **Strict batch sizing.** “Entries per request = 1” now means *one*, including the whole-place overview. All selected rooms are scheduled, rather than silently clipping at 12. A short, locally re-labeled entry can be retained even if the model gets a room ID wrong. Basic missing trigger keys receive a fallback and can be edited in Review.
 - **Output token cap.** Optional Output token limit dropdown: Auto / 2,048 / 4,096 / 8,192 / 16,384 / 32,768. Use the provider's *actual supported* maximum; an output cap is not the same thing as tokens used or context window size.
 - **No upstream auto-update.** `manifest.json` sets `auto_update=false` so an update does not replace the repair with the old version.

@@ -545,7 +545,10 @@ export function buildRequest(settings, options = {}) {
             : (options.budget || replyBudget(words, counts.max, entryCount)),
         mode,
         bilingual,
-        jsonSchema: options.noSchema ? null : entriesSchema(),
+        // Keep the JSON contract in the prompt; provider-enforced schema is
+        // opt-in because SillyTavern can silently return "{}" for unsupported
+        // or unparseable structured output.
+        jsonSchema: options.noSchema === false ? entriesSchema() : null,
         entryCount,
     };
 }
