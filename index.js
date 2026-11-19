@@ -19,6 +19,7 @@ import { verifyLorebookWrite } from './diagnostics.js';
 import { deleteWorldInfo, loadWorldInfo } from '../../../world-info.js';
 import { listLorebooks } from './lorebook.js';
 import { loadDraft, saveDraft, clearDraft, noteRaw, countPending } from './recovery.js';
+import { recoverRawReply } from './raw-recovery.js';
 import { button, node, textarea } from './dom.js';
 
 const EXT_PATH = new URL('.', import.meta.url).pathname.replace(/\/$/, '');
@@ -609,6 +610,41 @@ async function testLorebookSaving() {
     return outcome;
 }
 
+/** Import usable text that already arrived. No API request and no paid retry. */
+function salvageStoredResponses(ctx, draft) {
+    let added = 0;
+    const errors = [];
+    const written = new Set(draft.writtenRooms || []);
+    draft.completed ||= [];
+    draft.entries ||= [];
+    for (const raw of draft.raws || []) {
+        const task = (draft.tasks || []).find(item => item.id === raw.id);
+        const job = task && draft.jobs?.[task.jobIndex];
+        if (!task || !job) continue;
+
+        const result = recoverRawReply(raw.text, task.rooms, {
+            extractJson, normalizeEntries, reconcileCoverage, plainTextEntry,
+            englishOnly: job.keyLanguage === 'en', names: ownerNames(ctx, job),
+        });
+        if (!result.ok) {
+            errors.push(raw.id + ': ' + (result.error || 'No usable prose'));
+            continue;
+        }
+        for (const entry of result.entries) {
+            const id = task.jobIndex + ':' + normalizeId(entry.room);
+            if (written.has(id) || hasRoom(draft, task.jobIndex, entry.room)) continue;
+            draft.entries.push(decorateDraftEntry(ctx, job, task.jobIndex, entry));
+            added++;
+        }
+        const complete = task.rooms.every(room =>
+            written.has(task.jobIndex + ':' + normalizeId(room))
+            || hasRoom(draft, task.jobIndex, room));
+        if (complete && !draft.completed.includes(task.id)) draft.completed.push(task.id);
+    }
+    if (added) warnStorage(ctx, draft);
+    return { added, errors };
+}
+
 /** Inspect the raw response even when every JSON parser failed. */
 async function showRawDraft(draft) {
     const ctx = SillyTavern.getContext();
@@ -648,6 +684,16 @@ async function recoverDraft(action) {
         return false;
     }
     if (action === 'raw') { await showRawDraft(draft); return false; }
+    if (action === 'salvage') {
+        const recovered = salvageStoredResponses(ctx, draft);
+        if (!recovered.added) {
+            toastr.warning('No additional usable entries found in saved responses. No AI tokens used. ' +
+                recovered.errors.slice(0, 2).join(' | '), t('title'), { timeOut: 12000 });
+            return false;
+        }
+        toastr.success(recovered.added + ' entries recovered from returned text. No AI tokens used.', t('title'));
+        action = 'review';
+    }
     if (action === 'resume') {
         if (!countPending(draft)) { toastr.info('All requested rooms have returned. Open Review to save them.', t('title')); return false; }
         return generateEstate(draft.settings, draft.brief, draft.places, true);

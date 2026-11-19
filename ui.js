@@ -717,10 +717,12 @@ export async function openDialog(run) {
     const recoverySummary = node('p', 'est-hint');
     const recoveryActions = node('div', 'est-recovery__actions');
     const reviewSaved = button('Review saved entries', 'fa-solid fa-book-open');
+    const salvageSaved = button('Recover returned entries (0 AI tokens)', 'fa-solid fa-file-import');
+    salvageSaved.title = 'Parse previously returned text into editable entries without calling a model.';
     const resumeSaved = button('Resume missing rooms', 'fa-solid fa-play');
     const seeRaw = button('View returned text', 'fa-solid fa-file-lines');
     const discardSaved = button('Discard draft', 'fa-solid fa-trash');
-    recoveryActions.append(reviewSaved, resumeSaved, seeRaw, discardSaved);
+    recoveryActions.append(reviewSaved, salvageSaved, resumeSaved, seeRaw, discardSaved);
     recovery.append(recoveryTitle, recoverySummary, recoveryActions);
 
     const footer = node('div', 'est-footer');
@@ -750,6 +752,7 @@ export async function openDialog(run) {
         if (saved) {
             recoverySummary.textContent = `${saved.entries} recovered entr${saved.entries === 1 ? 'y' : 'ies'} (${saved.unsaved} not yet written); ${saved.pending} unfinished request${saved.pending === 1 ? '' : 's'}. ${saved.raws} returned response${saved.raws === 1 ? '' : 's'} preserved. Stored in this browser for this chat.`;
             reviewSaved.disabled = busy || saved.unsaved < 1;
+            salvageSaved.disabled = busy || saved.raws < 1;
             resumeSaved.disabled = busy || saved.pending < 1;
             seeRaw.disabled = busy || saved.raws < 1;
             discardSaved.disabled = busy;
@@ -822,6 +825,7 @@ export async function openDialog(run) {
         if (written && live) popup.complete(context.POPUP_RESULT.AFFIRMATIVE);
     };
     reviewSaved.addEventListener('click', () => recover('review'));
+    salvageSaved.addEventListener('click', () => recover('salvage'));
     resumeSaved.addEventListener('click', () => recover('resume'));
     seeRaw.addEventListener('click', () => recover('raw'));
     discardSaved.addEventListener('click', () => recover('discard'));

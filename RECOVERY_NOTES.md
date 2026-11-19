@@ -43,3 +43,9 @@ This is a local repair of the supplied `ST-Estate-main.zip` rather than an upstr
 - A successful test proves that SillyTavern's World Info write/reload works in the current installation; generation, parsing, and review remain separate hypotheses.
 - If cleanup fails, the UI reports the temporary book's exact name for manual deletion. The test never chooses a name from existing books.
 - No automatic LLM requests or paid retries were added.
+
+## 1.1.5 — raw response recovery and explicit output cap
+
+- **Recover returned entries (0 AI tokens)** uses the saved API responses in the current chat to reconstruct editable entries, including partial single-entry JSON where actual description prose arrived. It does not generate missing content, overwrite already-written entries, or make another model call.
+- When the user chooses an explicit output token cap, Estate now passes it unchanged as `responseLength`. Previously it silently used the lower of that cap and its computed automatic budget, often ~5K despite selecting 32K.
+- The cap is a maximum request, not a promise the model will produce that many tokens or the provider will allow them. Automatic retries are still disabled.

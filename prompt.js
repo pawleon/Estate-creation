@@ -540,8 +540,11 @@ export function buildRequest(settings, options = {}) {
             { role: 'system', content: system },
             { role: 'user', content: userParts.join('\n\n') },
         ],
+        // Pass the explicitly chosen cap directly to SillyTavern.
+        // Only Auto uses Estate's computed budget; the provider may still
+        // finish early or impose its own lower output limit.
         responseLength: settings.outputTokenCap > 0
-            ? Math.min(settings.outputTokenCap, options.budget || replyBudget(words, counts.max, entryCount))
+            ? settings.outputTokenCap
             : (options.budget || replyBudget(words, counts.max, entryCount)),
         mode,
         bilingual,
