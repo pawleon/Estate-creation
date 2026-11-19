@@ -36,3 +36,10 @@ This is a local repair of the supplied `ST-Estate-main.zip` rather than an upstr
 - Accept a single nesting layer under `data`, `result` or `output`.
 - Keep rejecting truly empty responses like `{}`; there is no generated prose to recover from them.
 - No automatic re-requests were added. These cases were checked with offline response fixtures and the existing interrupted-run/write-retry simulations, not against a paid API.
+
+## 1.1.4 — zero-token World Info diagnostic
+
+- Added a separate **Test lorebook saving (0 AI tokens)** button to Estate. It creates one uniquely named *unbound* temporary World Info book, writes a small synthetic entry, reloads it to verify, and deletes the temporary book. It does not ask a model to generate anything or modify the current recovery draft.
+- A successful test proves that SillyTavern's World Info write/reload works in the current installation; generation, parsing, and review remain separate hypotheses.
+- If cleanup fails, the UI reports the temporary book's exact name for manual deletion. The test never chooses a name from existing books.
+- No automatic LLM requests or paid retries were added.

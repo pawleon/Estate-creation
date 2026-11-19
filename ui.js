@@ -702,6 +702,8 @@ export async function openDialog(run) {
     const generate = button(t('generate'), 'fa-solid fa-wand-magic-sparkles');
     generate.classList.add('est-generate');
     actions.append(stop, background, scout, generate);
+    const diagnose = button('Test lorebook saving (0 AI tokens)', 'fa-solid fa-stethoscope');
+    diagnose.title = 'Creates, reads, and deletes a temporary unbound lorebook entry. No model request.';
 
     // Status and buttons ride together at the bottom of the scroller. The
     // board is long enough that a run started at the top would otherwise put
@@ -722,7 +724,7 @@ export async function openDialog(run) {
     recovery.append(recoveryTitle, recoverySummary, recoveryActions);
 
     const footer = node('div', 'est-footer');
-    footer.append(status, actions, recovery);
+    footer.append(status, actions, diagnose, recovery);
     root.append(footer);
 
     const popup = new context.Popup(root, context.POPUP_TYPE.TEXT, '', {
@@ -759,6 +761,7 @@ export async function openDialog(run) {
         // Generate and Stop take turns rather than sitting side by side: only
         // one of them is ever the thing to press, and a greyed-out Generate
         // next to a live Stop is just a button asking to be clicked at.
+        diagnose.disabled = busy;
         generate.hidden = busy;
         generate.disabled = busy || !!saved;
         generate.title = saved ? 'Recover or discard the existing saved draft before starting another paid generation.' : '';
@@ -801,6 +804,13 @@ export async function openDialog(run) {
     stop.addEventListener('click', () => {
         stop.disabled = true;
         run.cancel();
+    });
+
+    diagnose.addEventListener('click', async () => {
+        diagnose.disabled = true;
+        try { await run.diagnostic?.(); }
+        catch (error) { toastr.error(`Offline diagnostic failed: ${String(error?.message || error)}`, t('title')); }
+        finally { paint(); }
     });
 
     const recover = async action => {

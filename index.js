@@ -15,6 +15,9 @@ import { buildLorebookName, DEPTH, ORDER, readBoundLore, writeEntries } from './
 import { defaultNameTemplate, defaultSectionState, getBrief, getSettings, resolveProfileId, saveBrief, saveSettings } from './settings.js';
 import { buildSuggestRequest, normalizeSuggestions } from './suggest.js';
 import { mountUi, openDialog, unmountUi } from './ui.js';
+import { verifyLorebookWrite } from './diagnostics.js';
+import { deleteWorldInfo, loadWorldInfo } from '../../../world-info.js';
+import { listLorebooks } from './lorebook.js';
 import { loadDraft, saveDraft, clearDraft, noteRaw, countPending } from './recovery.js';
 import { button, node, textarea } from './dom.js';
 
@@ -587,6 +590,25 @@ async function generateEstate(settings, brief, places, resume = false) {
     }
 }
 
+/** A single opt-in diagnostic which does not invoke an LLM.
+ * Creates and verifies one temporary unbound World Info entry, then deletes it.
+ * This distinguishes an Estate write failure from a pre-write generation failure.
+ */
+async function testLorebookSaving() {
+    if (inFlight) { toastr.warning(t('toastBusy'), t('title')); return null; }
+    const ctx = SillyTavern.getContext();
+    const outcome = await verifyLorebookWrite({ writeEntries, loadWorldInfo, deleteWorldInfo, listLorebooks, context: ctx });
+    if (outcome.ok) {
+        toastr.success('World Info writing works. The failure occurs before Estate reaches the save step. No AI tokens were used.', t('title'), { timeOut: 12000 });
+    } else {
+        const detail = outcome.error || (outcome.cleanup ? 'Lorebook entry verification failed.' : 'Temporary lorebook cleanup failed.');
+        const leftover = outcome.temporaryBook ? ` Temporary lorebook left behind: ${outcome.temporaryBook}.` : '';
+        toastr.error(`Offline lorebook test failed: ${detail}.${leftover} No AI tokens were used.`, t('title'), { timeOut: 20000 });
+    }
+    console.info('[Estate] no-AI lorebook diagnostic', outcome);
+    return outcome;
+}
+
 /** Inspect the raw response even when every JSON parser failed. */
 async function showRawDraft(draft) {
     const ctx = SillyTavern.getContext();
@@ -868,6 +890,7 @@ function registerSlashCommand(open) {
 jQuery(async () => {
     const open = () => openDialog({
         generate: generateEstate,
+        diagnostic: testLorebookSaving,
         suggest: suggestPlaces,
         cancel: cancelGeneration,
         subscribe: subscribeRun,
