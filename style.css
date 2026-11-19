@@ -1,0 +1,971 @@
+/* ============================================================
+ * Estate for SillyTavern
+ * ============================================================ */
+
+:root {
+    --est-bg: var(--SmartThemeBlurTintColor, var(--SmartThemeBotMesBlurTintColor, #1a1a1a));
+    --est-fg: var(--SmartThemeBodyColor, #e6e6e6);
+    --est-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.14));
+    --est-accent: var(--SmartThemeQuoteColor, #c9a227);
+    --est-surface: rgba(255, 255, 255, 0.04);
+    --est-surface-strong: rgba(255, 255, 255, 0.07);
+    --est-muted: color-mix(in srgb, var(--est-fg) 58%, transparent);
+    --est-accent-soft: color-mix(in srgb, var(--est-accent) 16%, transparent);
+    --est-set-surface: color-mix(in srgb, var(--est-bg) 88%, rgba(255, 255, 255, 0.03) 12%);
+    --est-set-surface-strong: color-mix(in srgb, var(--est-bg) 80%, rgba(255, 255, 255, 0.08) 20%);
+    --est-set-accent-soft: color-mix(in srgb, var(--est-accent) 16%, var(--est-bg) 84%);
+}
+
+/* ============================================================
+ * ICON
+ * ============================================================ */
+.est-icon {
+    display: block;
+    width: 1em;
+    height: 1em;
+}
+
+/* The wand menu sizes its own glyphs, so the mark has to match them. */
+.est-menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.est-menu-icon .est-icon {
+    width: 1.15em;
+    height: 1.15em;
+}
+
+/* Menu rows are laid out on the text baseline. A Font Awesome button — which
+   is what every other extension puts here — is a box of text and has one; an
+   inline SVG is a replaced element, and its baseline is its own bottom edge,
+   so the mark hangs a descender's worth below the label. The row is centred
+   instead, the way the glyph rows end up looking anyway.
+
+   The id alone is not enough: core styles the row through
+   `#extensionsMenu > div:not(.extension_container)`, which carries an id, a
+   class and a type, so the parent has to be named here to outweigh it. */
+#extensionsMenu > #estate_wand_button,
+#extensionsMenu > .extension_container > #estate_wand_button {
+    align-items: center;
+    /* Same colour the Font Awesome buttons take, including the 0.5 opacity
+       core fades the row to until it is hovered. */
+    color: var(--SmartThemeBodyColor);
+}
+
+/* ============================================================
+ * SHARED SHELL
+ * ============================================================ */
+.est-dialog,
+.est-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+    color: var(--est-fg);
+}
+
+.est-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.est-title h3 {
+    margin: 0;
+    font-size: 1.12em;
+    letter-spacing: 0.02em;
+}
+.est-title__glyph {
+    display: inline-flex;
+    /* The mark reads as part of the heading, so it takes the text colour
+       rather than the accent — an accented glyph fights the title. */
+    color: inherit;
+    font-size: 1.35em;
+    line-height: 1;
+}
+
+/* ============================================================
+ * TABS
+ * ============================================================ */
+.est-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid var(--est-border);
+    border-radius: 999px;
+    background: var(--est-surface-strong);
+}
+
+.est-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1 1 0;
+    padding: 8px 14px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--est-fg);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+.est-tab:hover {
+    background: var(--est-surface);
+}
+.est-tab[aria-selected="true"] {
+    border-color: var(--est-accent);
+    background: var(--est-accent-soft);
+    color: var(--est-accent);
+    font-weight: 600;
+}
+.est-tab__icon {
+    width: 1.15em;
+    height: 1.15em;
+    flex: 0 0 auto;
+}
+
+.est-panels {
+    display: contents;
+}
+.est-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.est-panel[hidden] {
+    display: none;
+}
+
+.est-intro {
+    margin: 0;
+    font-size: 0.88em;
+    line-height: 1.5;
+    color: var(--est-muted);
+}
+
+.est-hint {
+    margin: 0;
+    font-size: 0.8em;
+    line-height: 1.45;
+    color: var(--est-muted);
+}
+
+.est-warn {
+    margin: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border-left: 3px solid var(--est-accent);
+    background: var(--est-accent-soft);
+    font-size: 0.8em;
+    line-height: 1.4;
+}
+
+/* ============================================================
+ * CARDS
+ * ============================================================ */
+.est-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--est-border);
+    border-radius: 12px;
+    background: var(--est-surface);
+}
+
+.est-card__heading {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.est-card__title {
+    font-weight: 700;
+    font-size: 0.94em;
+    letter-spacing: 0.02em;
+}
+.est-card__meta,
+.est-card__count {
+    font-size: 0.76em;
+    color: var(--est-muted);
+}
+.est-card__count {
+    color: var(--est-accent);
+}
+.est-card__clear {
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--est-muted);
+    font-size: 0.76em;
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
+.est-card__clear:hover {
+    color: var(--est-accent);
+}
+
+.est-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* --- collapsing --- */
+/* No chevron: the whole heading is the target, and a row of arrows down the
+   side of the dialog reads as clutter rather than as affordance. The folded
+   state is shown by the card going flat instead. */
+.est-card--collapsible > .est-card__heading {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    /* A tap on a phone should not select the title text. */
+    -webkit-tap-highlight-color: transparent;
+}
+.est-card--collapsible > .est-card__heading:hover .est-card__title {
+    color: var(--est-accent);
+}
+.est-card--collapsed > .est-card__body {
+    display: none;
+}
+/* A folded section should read as a line, not as a live panel. */
+.est-card--collapsed {
+    background: transparent;
+    padding-top: 9px;
+    padding-bottom: 9px;
+}
+
+/* ============================================================
+ * FOLD BAR
+ * ============================================================ */
+.est-foldbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.est-foldbar__button {
+    padding: 3px 10px;
+    border: 1px solid var(--est-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--est-muted);
+    font-size: 0.76em;
+    cursor: pointer;
+    transition: border-color 0.14s ease, color 0.14s ease;
+}
+.est-foldbar__button:hover {
+    border-color: var(--est-accent);
+    color: var(--est-accent);
+}
+
+/* ============================================================
+ * MUST-COVER LIST
+ * ============================================================ */
+/* The parsed items, echoed back. Separator handling is deliberately loose,
+   so showing what was actually understood is the only honest feedback. */
+.est-cover__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.est-cover__list[hidden] {
+    display: none;
+}
+.est-cover__item {
+    padding: 3px 9px;
+    border: 1px solid var(--est-accent);
+    border-radius: 999px;
+    background: var(--est-accent-soft);
+    color: var(--est-accent);
+    font-size: 0.78em;
+    line-height: 1.3;
+}
+
+/* ============================================================
+ * CHIPS
+ * ============================================================ */
+.est-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.est-chip {
+    padding: 5px 11px;
+    border: 1px solid var(--est-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--est-fg);
+    font-size: 0.83em;
+    line-height: 1.3;
+    cursor: pointer;
+    transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.est-chip:hover {
+    border-color: color-mix(in srgb, var(--est-accent) 50%, var(--est-border));
+    background: var(--est-surface-strong);
+}
+.est-chip[aria-pressed="true"] {
+    border-color: var(--est-accent);
+    background: var(--est-accent-soft);
+    color: var(--est-accent);
+    font-weight: 600;
+}
+
+/* --- user-defined tags --- */
+.est-chip--custom {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-style: dashed;
+}
+.est-chip--custom[aria-pressed="true"] {
+    border-style: solid;
+}
+.est-chip__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15em;
+    height: 1.15em;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--est-fg) 12%, transparent);
+    font-size: 0.95em;
+    line-height: 1;
+    opacity: 0.65;
+}
+.est-chip__remove:hover {
+    background: color-mix(in srgb, #ff6b6b 45%, transparent);
+    opacity: 1;
+}
+
+.est-chip--add {
+    border-style: dashed;
+    color: var(--est-muted);
+}
+.est-chip--add:hover {
+    color: var(--est-accent);
+}
+
+.est-custom {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.est-custom__input {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.est-custom__ok {
+    flex: 0 0 auto;
+}
+
+/* ============================================================
+ * SEGMENTED CONTROL
+ * ============================================================ */
+.est-segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--est-border);
+    border-radius: 10px;
+    background: var(--est-surface-strong);
+}
+
+.est-seg {
+    flex: 1 1 auto;
+    min-width: 84px;
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--est-fg);
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: background 0.14s ease, color 0.14s ease;
+}
+.est-seg:hover {
+    background: var(--est-surface);
+}
+.est-seg[aria-pressed="true"] {
+    background: var(--est-accent-soft);
+    color: var(--est-accent);
+    font-weight: 600;
+}
+
+/* ============================================================
+ * FIELDS
+ * ============================================================ */
+.est-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+/* `display` on the class outranks the `hidden` attribute, so a field hidden
+   in JS would otherwise stay on screen. */
+.est-field[hidden] {
+    display: none;
+}
+.est-field__label {
+    font-weight: 600;
+    font-size: 0.87em;
+}
+.est-field--off {
+    opacity: 0.42;
+    pointer-events: none;
+}
+
+.est-textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 62px;
+    line-height: 1.5;
+}
+
+.est-number {
+    max-width: 130px;
+    text-align: center;
+}
+
+.est-toggle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 6px;
+}
+
+.est-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.est-toggle:hover {
+    background: var(--est-surface-strong);
+}
+.est-toggle input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin: 0;
+}
+.est-toggle__label {
+    font-size: 0.86em;
+}
+
+/* ============================================================
+ * ACTIONS / STATUS
+ * ============================================================ */
+.est-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+/* The status block and the buttons ride together at the bottom of the
+   scroller. A run started at the top of a board this long would otherwise put
+   both the clock and the way out of reach until you scrolled back down. */
+.est-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    /* The bar floats over a scrolling board, so it needs a surface of its own:
+       without one the chips slide underneath and read straight through the
+       buttons. The negative margin lets it span the dialog's own padding. */
+    margin: 0 -4px -4px;
+    padding: 6px 4px 4px;
+    background: var(--est-bg);
+    border-top: 1px solid var(--est-border);
+}
+
+/* `.menu_button` sets `display: flex`, which outranks the `hidden` attribute —
+   which is why Stop sat there from the moment the dialog opened. */
+.est-actions .menu_button[hidden] {
+    display: none;
+}
+
+.est-generate,
+.est-write {
+    font-weight: 600;
+}
+
+.est-status {
+    padding: 8px 12px;
+    border: 1px solid var(--est-border);
+    border-left: 3px solid var(--est-accent);
+    border-radius: 10px;
+    background: var(--est-surface);
+    font-size: 0.85em;
+}
+
+.est-status__line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.est-status__spinner {
+    opacity: 0.75;
+}
+
+.est-status__text {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Tabular figures, so a ticking clock does not shuffle the line beside it. */
+.est-status__clock {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    opacity: 0.85;
+}
+
+.est-status__step {
+    display: block;
+    margin-top: 4px;
+    opacity: 0.75;
+}
+
+.est-status__note {
+    margin: 6px 0 0;
+    font-size: 0.92em;
+    opacity: 0.65;
+}
+
+/* The board is inert while a run is on, but the status block and the buttons
+   beneath it have to stay live — that is where Stop and the way out are. */
+.est-dialog--busy .est-card,
+.est-dialog--busy .est-tabs,
+.est-preview--busy .est-entry {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* ============================================================
+ * THE SCOUT
+ * ============================================================ */
+.est-suggest {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: left;
+    color: var(--est-fg);
+}
+
+.est-suggest__list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.est-suggest__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--est-border);
+    border-left: 3px solid var(--est-accent);
+    border-radius: 10px;
+    background: var(--est-surface);
+    cursor: pointer;
+    transition: opacity 0.14s ease, border-color 0.14s ease;
+}
+.est-suggest__item--off {
+    opacity: 0.45;
+    border-left-color: var(--est-border);
+}
+.est-suggest__item input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin: 3px 0 0;
+}
+
+.est-suggest__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.est-suggest__name {
+    font-weight: 600;
+}
+
+.est-suggest__why {
+    font-size: 0.85em;
+    color: var(--est-muted);
+}
+
+.est-suggest__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.est-suggest__tag {
+    padding: 2px 8px;
+    border: 1px solid var(--est-border);
+    border-radius: 999px;
+    background: var(--est-surface-strong);
+    font-size: 0.76em;
+    color: var(--est-muted);
+}
+
+/* ============================================================
+ * PREVIEW
+ * ============================================================ */
+.est-preview__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--est-border);
+}
+
+.est-summary {
+    flex: 1 1 auto;
+    min-width: 180px;
+    font-size: 0.85em;
+    color: var(--est-accent);
+    font-weight: 600;
+}
+
+.est-preview__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.est-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--est-border);
+    border-left: 3px solid var(--est-accent);
+    border-radius: 12px;
+    background: var(--est-surface);
+    transition: opacity 0.14s ease, border-color 0.14s ease;
+}
+.est-entry--off {
+    opacity: 0.4;
+    border-left-color: var(--est-border);
+}
+.est-entry--off .est-entry__body {
+    display: none;
+}
+
+.est-entry__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.est-entry__head input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin: 0;
+}
+.est-entry__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 600;
+}
+
+/* Which building this row belongs to. A scouted run reviews several at once,
+   and "Main hall" three times over says nothing about which one. */
+.est-entry__place {
+    flex: 0 0 auto;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--est-accent-soft);
+    color: var(--est-accent);
+    font-size: 0.76em;
+    font-weight: 600;
+}
+
+.est-entry__body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.est-entry__label {
+    font-size: 0.76em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--est-muted);
+    margin-top: 4px;
+}
+
+/* ============================================================
+ * COMPILED KEYS
+ * ============================================================ */
+.est-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.est-key {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 3px 9px;
+    border: 1px solid var(--est-border);
+    border-radius: 999px;
+    background: var(--est-surface-strong);
+    font-size: 0.78em;
+    cursor: help;
+}
+.est-key__text {
+    font-weight: 600;
+}
+.est-key__kind {
+    font-size: 0.86em;
+    color: var(--est-muted);
+}
+
+/* ============================================================
+ * SETTINGS CARD (Extensions tab) — rounded, pretty card
+ * ============================================================ */
+.estate-settings .inline-drawer-header b {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.estate-settings__mark {
+    display: inline-flex;
+    color: inherit;
+    font-size: 1.1em;
+}
+
+.estate-settings__card {
+    margin-top: 6px;
+    padding: 14px;
+    border: 1px solid var(--est-border);
+    border-radius: 16px;
+    background:
+        linear-gradient(180deg, color-mix(in srgb, var(--est-accent) 9%, transparent) 0%, transparent 22%),
+        var(--est-set-surface);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    color: var(--est-fg);
+}
+
+.estate-settings__intro {
+    margin: 0 0 12px;
+    font-size: 0.84em;
+    line-height: 1.5;
+    color: var(--est-muted);
+}
+
+.estate-settings__primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    margin: 0 0 14px;
+    border: 1px solid var(--est-accent);
+    border-radius: 999px;
+    background: var(--est-set-accent-soft);
+    color: var(--est-accent);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.08s ease;
+}
+.estate-settings__primary:hover {
+    background: color-mix(in srgb, var(--est-accent) 26%, var(--est-set-surface) 74%);
+}
+.estate-settings__primary:active {
+    transform: scale(0.98);
+}
+
+.estate-settings__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    margin: 0 0 6px;
+    border: 1px solid var(--est-border);
+    border-radius: 10px;
+    background: var(--est-set-surface-strong);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.estate-settings__row:hover {
+    border-color: color-mix(in srgb, var(--est-accent) 40%, var(--est-border) 60%);
+}
+.estate-settings__row--col {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.estate-settings__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.estate-settings__label {
+    font-size: 0.9em;
+    line-height: 1.35;
+    font-weight: 600;
+}
+.estate-settings__desc {
+    font-size: 0.76em;
+    line-height: 1.4;
+    color: var(--est-muted);
+}
+
+.estate-settings__textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 84px;
+    font-size: 0.84em;
+    line-height: 1.45;
+}
+
+.estate-settings__section {
+    margin-top: 14px;
+}
+.estate-settings__heading {
+    margin: 0 0 8px;
+    font-size: 0.72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--est-muted);
+}
+
+.estate-settings__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.estate-settings__reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--est-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--est-fg);
+    font-size: 0.78em;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+.estate-settings__reset:hover {
+    border-color: var(--est-accent);
+    color: var(--est-accent);
+}
+
+.estate-settings__saved {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78em;
+    font-weight: 600;
+    color: #3fd17a;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+.estate-settings__saved--on {
+    opacity: 1;
+    transform: none;
+}
+
+/* ============================================================
+ * RESPONSIVE
+ * ============================================================ */
+@media (max-width: 600px) {
+    .est-card {
+        padding: 10px 11px;
+    }
+    .est-chip {
+        font-size: 0.8em;
+        padding: 5px 9px;
+    }
+    .est-seg {
+        min-width: 0;
+        flex-basis: calc(50% - 4px);
+    }
+    .est-toggle-grid {
+        grid-template-columns: 1fr;
+    }
+    .est-actions {
+        flex-direction: column-reverse;
+    }
+    .est-actions .menu_button {
+        width: 100%;
+        justify-content: center;
+    }
+    .est-tab {
+        padding: 7px 10px;
+        font-size: 0.85em;
+    }
+    .est-custom {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .est-chip,
+    .est-seg,
+    .est-tab,
+    .est-entry,
+    .est-foldbar__button,
+    .estate-settings__row,
+    .estate-settings__primary,
+    .est-suggest__item,
+    .estate-settings__saved {
+        transition: none;
+    }
+
+    .est-status__spinner {
+        animation: none;
+    }
+}
+
+/* Recovery controls: compact and mobile-readable, consistent with Estate. */
+.est-recovery {
+    margin-top: 10px;
+    border: 1px solid var(--SmartThemeBorderColor, #b9a98b);
+    border-radius: 10px;
+    padding: 11px;
+}
+.est-recovery[hidden] { display: none !important; }
+.est-recovery__title { font-weight: 650; margin-bottom: 4px; }
+.est-recovery__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 8px;
+}
+.est-recovery__actions .menu_button {
+    width: 100%;
+    min-width: 0;
+    padding: 7px 5px;
+    font-size: .88em;
+    justify-content: center;
+    white-space: normal;
+    text-align: center;
+}
+@media (max-width: 430px) {
+    .est-recovery__actions { grid-template-columns: 1fr; }
+}
